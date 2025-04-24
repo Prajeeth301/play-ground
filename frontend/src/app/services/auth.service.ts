@@ -21,6 +21,7 @@ export class AuthService {
 
   validateUser() {
     if (!this.isAuthenticated) {
+      this.isUserAuthenticated.set(false);
       this.refreshToken().pipe(
         catchError((err: any) => {
           // console.log(err);
@@ -29,7 +30,11 @@ export class AuthService {
         })
       ).subscribe((data) => {
         this.Token = data.accessToken;
+        // old route navigate
       });
+    }else {
+      // login, unauthorized, not-found
+      this.isUserAuthenticated.set(true);
     }
   }
 
@@ -52,7 +57,7 @@ export class AuthService {
   }
 
   register(registrationCreds: RegisterRequest): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(`${this.api}/register`, registrationCreds, { withCredentials: true }).pipe(
+    return this.http.post<RegisterResponse>(`${this.api}/register`, registrationCreds).pipe(
       catchError(err => {
         console.error('Registration failed', err);
         return throwError(() => err);
@@ -62,7 +67,7 @@ export class AuthService {
 
   // {withCredentials: true,}
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.api}/login`, credentials, { withCredentials: true })
+    return this.http.post<LoginResponse>(`${this.api}/login`, credentials)
       .pipe(
         catchError(err => {
           console.error('Login failed', err);
@@ -72,7 +77,7 @@ export class AuthService {
   }
 
   refreshToken() {
-    return this.http.post<{ accessToken: string }>(`${this.api}/refresh-token`, {}, { withCredentials: true });
+    return this.http.post<{ accessToken: string }>(`${this.api}/refresh-token`, {});
   }
 
   logout() {

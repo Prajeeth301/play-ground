@@ -11,10 +11,16 @@ import { AuthService } from './services/auth.service';
 })
 export class AppComponent {
   title = 'frontend';
+  isAuthenticated = false;
 
   authService = inject(AuthService);
 
   constructor() {
     this.authService.validateUser();
+
+    effect(() => {
+      this.isAuthenticated = this.authService.isUserAuthenticated();
+    });
+    
   }
 }

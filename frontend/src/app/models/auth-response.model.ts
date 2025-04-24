@@ -14,7 +14,6 @@ export interface User {
 export interface LoginResponse {
     message: string,
     accessToken: string,
-    refreshToken: string
 }
 
 export interface RefreshTokenResponse {
