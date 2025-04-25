@@ -4,33 +4,33 @@ Here’s a comprehensive list of **edge cases** to consider when dealing with **
 
 ### 🔒 **Token Handling Issues**
 1. **Expired Access Token**
-   - Token expires while user is actively using the app (mid-session).
-   - Token is already expired when the app starts (e.g., from localStorage).
+   - Token expires while user is actively using the app (mid-session). [handled in interceptors]
+   - Token is already expired when the app starts (e.g., from localStorage). [authService validating user on page load]
 
 2. **Missing Token**
-   - Token not stored properly in localStorage/sessionStorage.
-   - Token deleted manually by user or cleared by browser.
+   - Token not stored properly in localStorage/sessionStorage. [handle properly]
+   - Token deleted manually by user or cleared by browser.  [authService validating user on page load]
 
 3. **Malformed or Tampered Token**
-   - Token has an invalid structure or has been manually tampered with.
+   - Token has an invalid structure or has been manually tampered with. [handled in interceptors]
 
 4. **Mismatched Token Source**
-   - Token expected in `Authorization` header but found elsewhere (e.g., cookies or query params).
+   - Token expected in `Authorization` header but found elsewhere (e.g., cookies or query params). [handle properly]
 
 ---
 
 ### 🔁 **Token Refresh & Expiry**
 5. **Refresh Token Expired**
-   - Refresh token has expired, but app still tries to refresh silently.
+   - Refresh token has expired, but app still tries to refresh silently. [handled but need to Test]
 
 6. **Simultaneous Requests with Expired Token**
    - Multiple HTTP requests triggered at the same time while access token is expired → may cause multiple refresh requests.
 
 7. **Refresh Token Reuse Attack**
-   - Refresh token is stolen and used to gain access.
+   - Refresh token is stolen and used to gain access. [need to dig deep]
 
 8. **Token Rotation Issues**
-   - Server issues a new refresh token on each refresh but the client keeps using the old one.
+   - Server issues a new refresh token on each refresh but the client keeps using the old one. [Not an issue as i am using cookie]
 
 ---
 
@@ -39,7 +39,7 @@ Here’s a comprehensive list of **edge cases** to consider when dealing with **
    - User logs out in one tab but remains logged in on other tabs unless synchronization is handled.
 
 10. **Multiple Tabs Refreshing Token Simultaneously**
-    - All tabs try refreshing the token at the same time, causing race conditions or invalid token states.
+    - All tabs try refreshing the token at the same time, causing race conditions or invalid token states. [No issue]
 
 ---
 

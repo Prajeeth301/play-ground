@@ -106,7 +106,8 @@ export const refreshToken = async (req, res) => {
 
     return res.json({ accessToken: newAccessToken });
   } catch (error) {
-    return res.status(403).json({ error: 'Invalid refresh token' });
+    res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: 'Strict' });
+    return res.status(403).json({ error: 'Invalid refresh token', MaxRetriesCompleted: true });
   }
 };
 
