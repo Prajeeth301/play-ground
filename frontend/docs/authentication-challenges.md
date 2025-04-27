@@ -24,8 +24,8 @@ Here’s a comprehensive list of **edge cases** to consider when dealing with **
    - Refresh token has expired, but app still tries to refresh silently. [handled but need to Test]
 
 6. **Simultaneous Requests with Expired Token**
-   - Multiple HTTP requests triggered at the same time while access token is expired → may cause multiple refresh requests.
-
+   - Multiple HTTP requests triggered at the same time while access token is expired → may cause multiple refresh requests. [handled but need to Test]
+ 
 7. **Refresh Token Reuse Attack**
    - Refresh token is stolen and used to gain access. [need to dig deep]
 
