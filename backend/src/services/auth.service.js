@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import ms from 'ms';
 
 dotenv.config();
 
@@ -15,4 +16,11 @@ export const generateAccessToken = (payload) => {
 // Generate refresh token
 export const generateRefreshToken = (payload) => {
   return jwt.sign(payload, secret, { expiresIn: refreshTokenExpiry });
+};
+
+export const calculateExpiration = (expirationString) => {
+  const expirationTimeInMs = ms(expirationString); // Convert to milliseconds using ms package
+  const expirationDate =  new Date(Date.now() + expirationTimeInMs); // Return the expiration date
+  console.log('Expiration date:', expirationDate);
+  return expirationDate
 };

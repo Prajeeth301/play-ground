@@ -1,0 +1,135 @@
+openapi: 3.0.0
+info:
+  title: backend application
+  version: 1.0.0
+  description: backend application APIs
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - BearerAuth: []  # Specifies that the BearerAuth is applied globally to all routes
+servers:
+  - url: 'http://localhost:3000'  # Update this to your base URL if different
+
+paths:
+  /api/health:
+    get:
+      summary: Health of the application
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Get Health status of Server, DB
+        '400':
+          description: Bad Request
+
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Successfully registered
+        '400':
+          description: Bad Request
+
+  /api/auth/login:
+    post:
+      summary: Login an existing user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successfully logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '401':
+          description: Unauthorized
+
+  /api/auth/refresh-token:
+    post:
+      summary: Refresh JWT token
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Successfully refreshed token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '401':
+          description: Unauthorized
+
+  /api/auth/logout:
+    post:
+      summary: Logout and invalidate the refresh token
+      tags:
+        - Auth
+      security:
+        - BearerAuth: []  # Bearer authentication is required to log out
+      responses:
+        '200':
+          description: Successfully logged out and refresh token invalidated
+        '204':
+          description: No refresh token found
+        '400':
+          description: Invalid refresh token
+
+  /api/protected:
+    get:
+      summary: Protected route that requires authentication
+      tags:
+        - Test
+      security:
+        - BearerAuth: []  # This applies Bearer authentication to the protected route
+      responses:
+        '200':
+          description: Protected route access granted
+        '401':
+          description: Unauthorized

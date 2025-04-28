@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .status-ok {
+            color: green;
+        }
+        .status-error {
+            color: red;
+        }
+        .info-box {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .info-box h3 {
+            margin-top: 0;
+        }
+        .error-box {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+
+<h1>System Health Status</h1>
+
+<div class="info-box">
+    <h3>Status: <span class="<%= status === 'OK' ? 'status-ok' : 'status-error' %>"><%= status %></span></h3>
+    <p><strong>Message:</strong> <%= message %></p>
+    <p><strong>Timestamp:</strong> <%= systemInfo.timestamp %></p>
+</div>
+
+<% if (status === 'OK') { %>
+    <div class="info-box">
+        <h3>System Information</h3>
+        <ul>
+            <li><strong>Hostname:</strong> <%= systemInfo.hostname %></li>
+            <li><strong>Platform:</strong> <%= systemInfo.platform %></li>
+            <li><strong>CPU Cores:</strong> <%= systemInfo.cpuCores %></li>
+            <li><strong>Free Memory:</strong> <%= systemInfo.freeMemory %> bytes</li>
+            <li><strong>Total Memory:</strong> <%= systemInfo.totalMemory %> bytes</li>
+            <li><strong>Uptime:</strong> <%= systemInfo.uptime %> seconds</li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <h3>Database Status: <%= dbStatus %></h3>
+    </div>
+<% } else { %>
+    <div class="error-box">
+        <h3>Error Details:</h3>
+        <p><%= error %></p>
+    </div>
+<% } %>
+
+</body>
+</html>

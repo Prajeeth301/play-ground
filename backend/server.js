@@ -1,15 +1,20 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import cookieParser from 'cookie-parser';
 import authRoutes from './src/routes/auth.routes.js';
-import { swaggerOptions } from './swagger.options.js';
 import { authenticateToken } from './src/middlewares/auth.middleware.js';
 import cors from 'cors';
+import YAML from 'yamljs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { health } from './src/controllers/health.controller.js';
 
 dotenv.config();
-const specs = swaggerJsdoc(swaggerOptions);
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const swaggerYMLPath = path.join(__dirname, 'swagger.yml');
+const swaggerDocument = YAML.load(swaggerYMLPath);
 
 const app = express();
 
@@ -23,45 +28,23 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Setup EJS as template engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views')); // Specify the folder for views
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/api/auth', authRoutes);
 
+app.get('/api/health', health);
 
-/**
- * @swagger
- * /api/health:
- *   get:
- *     summary: Health of the application
- *     tags: [Health]
- *     responses:
- *       200:
- *         description: Get Health status of Server, DB
- *       400:
- *         description: Bad Request
- */
-app.get('/api/health', (req, res) => {
-    res.send({ message: 'API is healthy' });
-});
-
-
-/**
- * @swagger
- * /api/protected:
- *   get:
- *     summary: Protected route that requires authentication
- *     tags: [Test]
- *     security:
- *       - BearerAuth: []
- *     responses:
- *       200:
- *         description: Protected route access granted
- *       401:
- *         description: Unauthorized
- */
 app.get('/api/protected', authenticateToken, (req, res) => {
     res.send('This is a protected route');
+});
+
+// Catch-all route for empty or undefined routes and redirect to Swagger docs
+app.all('/', (req, res) => {
+    res.redirect('/api/health');
 });
 
 const PORT = process.env.PORT || 3000;

@@ -8,21 +8,23 @@ datasource db {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  createdAt DateTime @default(now())
-  refreshTokens RefreshToken[]
+  id             Int             @id @default(autoincrement())
+  name           String
+  email          String          @unique
+  password       String
+  createdAt      DateTime         @default(now())
+  refreshTokens  RefreshToken[]   // 1 User -> many RefreshTokens
 }
 
 model RefreshToken {
-  id        Int      @id @default(autoincrement())
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    Int      @unique
-  user      User     @relation(fields: [userId], references: [id])
+  id          Int       @id @default(autoincrement())
+  token       String    @unique  // Each token must be unique
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  ipAddress   String?   // optional, because sometimes IP might not be captured
+  userAgent   String?   // device/browser info
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  expiresAt   DateTime? // Nullable DateTime field (can be null)
+  isValid     Boolean   @default(true) // in case you want soft revocation
 }
-
-

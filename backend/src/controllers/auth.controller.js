@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs';
-import { generateAccessToken, generateRefreshToken } from '../services/auth.service.js';
+import { calculateExpiration, generateAccessToken, generateRefreshToken } from '../services/auth.service.js';
 import jwt from 'jsonwebtoken';
 import prisma from '../prisma/prisma.client.js';
+import ms from 'ms';
 
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
@@ -34,9 +35,12 @@ export const register = async (req, res) => {
 
     return res.status(201).json({
       message: 'User registered successfully',
-      newUser
+      userInfo: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email
+      }
       // accessToken,
-      // refreshToken,
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -49,39 +53,65 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+  if (!user) return res.status(404).json({ error: 'User not found' });
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) return res.status(400).json({ error: 'Invalid credentials' });
+  if (!isPasswordValid) return res.status(401).json({ error: 'Invalid credentials' });
 
   const accessToken = generateAccessToken({ id: user.id, email: user.email });
   const refreshToken = generateRefreshToken({ id: user.id, email: user.email });
 
-  const existingToken = await prisma.refreshToken.findFirst({
-    where: { userId: user.id },
+  // Get IP address and User-Agent from request headers
+  const ipAddress = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  const userAgent = req.headers['user-agent'] || 'unknown';
+
+  const accessTokenExpiresAt = calculateExpiration(process.env.JWT_ACCESS_EXPIRATION);
+  const refreshTokenExpiresAt = calculateExpiration(process.env.JWT_REFRESH_EXPIRATION);
+
+  console.log(accessTokenExpiresAt);
+  console.log(refreshTokenExpiresAt);
+  
+
+  const refreshTokenExpirationTime = ms(process.env.JWT_REFRESH_EXPIRATION);
+
+  // Check if a refresh token already exists for this user, IP address, and user-agent
+  const existingRefreshToken = await prisma.refreshToken.findFirst({
+    where: {
+      userId: user.id,
+      ipAddress,
+      userAgent,
+      isValid: true, // Only consider valid tokens
+    },
   });
 
-  if (existingToken) {
-    // Just update token — updatedAt will auto-update
+  if (existingRefreshToken) {
+    // If a token exists, update the expiration date to extend its validity
     await prisma.refreshToken.update({
-      where: { userId: user.id },
-      data: { token: refreshToken },
+      where: { id: existingRefreshToken.id },
+      data: {
+        token: refreshToken,
+        expiresAt: refreshTokenExpiresAt, // Use the dynamically calculated expiration
+      },
     });
   } else {
-    // Create new row — createdAt will auto-set
+    // If no token exists, create a new refresh token
     await prisma.refreshToken.create({
       data: {
-        userId: user.id,
         token: refreshToken,
+        userId: user.id,
+        ipAddress,
+        userAgent,
+        expiresAt: refreshTokenExpiresAt, // Use the dynamically calculated expiration
       },
     });
   }
 
-  res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true , sameSite: 'Strict'});
+  res.cookie('refreshToken', refreshToken, { maxAge: refreshTokenExpirationTime, httpOnly: true, secure: true, sameSite: 'Strict' });
 
   return res.json({
     message: 'User logged in successfully',
-    accessToken
+    accessToken,
+    expiresAt: accessTokenExpiresAt
   });
 };
 
@@ -114,10 +144,21 @@ export const refreshToken = async (req, res) => {
 export const logout = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
 
-  if (!refreshToken) return res.status(204).json({});
+  if (!refreshToken) return res.status(204).json({ message: "No refresh token found" });
 
+  // Decode the refresh token to get the user ID
   const decoded = jwt.decode(refreshToken);
-  await db.execute('UPDATE users SET refresh_token = NULL WHERE id = ?', [decoded?.id]);
 
-  res.clearCookie('refreshToken').status(200).json({message : "Logged out Successfully"});
-}
+  if (!decoded || !decoded.id) {
+    return res.status(400).json({ message: 'Invalid refresh token' });
+  }
+
+  // Use Prisma to update the user's refreshToken field to null
+  await prisma.user.update({
+    where: { id: decoded.id },
+    data: { refresh_token: null },  // Set the refreshToken field to null
+  });
+
+  // Clear the refresh token from the cookie
+  res.clearCookie('refreshToken').status(200).json({ message: "Logged out Successfully" });
+};
