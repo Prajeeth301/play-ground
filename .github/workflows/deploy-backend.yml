@@ -70,6 +70,9 @@ jobs:
 
             rm load_env.sh
 
+            # Reload bash 
+            source ~/.bashrc
+
             # Clean previous backend folder if exists
             rm -rf backend
             unzip -o backend.zip
