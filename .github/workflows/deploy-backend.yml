@@ -68,7 +68,7 @@ jobs:
             if pm2 list | grep -q backend-server; then
               pm2 restart backend-server
             else
-              pm2 start index.js --name backend-server
+              pm2 start server.js --name backend-server
               pm2 startup systemd -u ec2-user --hp /home/ec2-user
               pm2 save
             fi
