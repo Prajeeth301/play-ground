@@ -13,13 +13,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Compress backend
         run: zip -r backend.zip backend -x "**/node_modules/**"
 
       - name: Upload backend artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backend-artifact
           path: backend.zip
@@ -30,10 +30,10 @@ jobs:
 
     steps:
       - name: Checkout code (required for access to secrets and metadata)
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Download backend artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: backend-artifact
           path: .
