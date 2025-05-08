@@ -1,0 +1,75 @@
+name: Deploy Node.js to EC2
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Compress backend
+        run: zip -r backend.zip backend -x "**/node_modules/**"
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-artifact
+          path: backend.zip
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code (required for access to secrets and metadata)
+        uses: actions/checkout@v2
+
+      - name: Download backend artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-artifact
+          path: .
+
+      - name: Set up SSH key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Transfer backend to EC2
+        run: |
+          scp -o StrictHostKeyChecking=no -i key.pem backend.zip ec2-user@${{ secrets.EC2_PUBLIC_IP }}:/home/ec2-user/
+
+      - name: Deploy via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            cd /home/ec2-user
+
+            # Clean previous backend folder if exists
+            rm -rf backend
+            unzip -o backend.zip
+
+            cd backend
+            npm install
+
+            # Install PM2 if not installed
+            if ! command -v pm2 &> /dev/null; then
+              sudo npm install -g pm2
+            fi
+
+            # Start or restart backend with PM2
+            if pm2 list | grep -q backend-server; then
+              pm2 restart backend-server
+            else
+              pm2 start index.js --name backend-server
+              pm2 startup systemd -u ec2-user --hp /home/ec2-user
+              pm2 save
+            fi
+          EOF
