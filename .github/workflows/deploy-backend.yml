@@ -52,9 +52,30 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
             cd /home/ec2-user
 
+            # Dump the environment variables
+            curl -H "Authorization: token ${{ secrets.GH_PAT }}" -o dump_env.sh https://raw.githubusercontent.com/${{ secrets.GH_USER }}/deployment-scripts/main/playground/dump_env.sh
+
+            chmod +x dump_env.sh
+
+            ./dump_env.sh
+
+            rm dump_env.sh
+
+            # Environment loader script
+            curl -H "Authorization: token ${{ secrets.GH_PAT }}" -o load_env.sh https://raw.githubusercontent.com/${{ secrets.GH_USER }}/deployment-scripts/refs/heads/main/playground/load_env.sh
+
+            chmod +x load_env.sh
+
+            ./load_env.sh
+
+            rm load_env.sh
+
             # Clean previous backend folder if exists
             rm -rf backend
             unzip -o backend.zip
+
+            # Delete backend.zip if exists
+            rm -rf backend.zip
 
             cd backend
             npm install
