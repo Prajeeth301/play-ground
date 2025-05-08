@@ -45,12 +45,12 @@ jobs:
 
       - name: Transfer backend to EC2
         run: |
-          scp -o StrictHostKeyChecking=no -i key.pem backend.zip ec2-user@${{ secrets.EC2_PUBLIC_IP }}:/home/ec2-user/
+          scp -o StrictHostKeyChecking=no -i key.pem backend.zip ${{ secrets.EC2_USER }}@${{ secrets.EC2_PUBLIC_IP }}:/home/${{ secrets.EC2_USER }}/
 
       - name: Deploy via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
-            cd /home/ec2-user
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            cd /home/${{ secrets.EC2_USER }}
 
             # Dump the environment variables
             curl -H "Authorization: token ${{ secrets.GH_PAT }}" -o dump_env.sh https://raw.githubusercontent.com/${{ secrets.GH_USER }}/deployment-scripts/main/playground/dump_env.sh
@@ -93,7 +93,7 @@ jobs:
               pm2 restart backend-server
             else
               pm2 start server.js --name backend-server
-              pm2 startup systemd -u ec2-user --hp /home/ec2-user
+              pm2 startup systemd -u ${{ secrets.EC2_USER }} --hp /home/${{ secrets.EC2_USER }}
               pm2 save
             fi
           EOF
