@@ -20,7 +20,7 @@ const app = express();
 
 
 app.use(cors({
-    origin: ['http://localhost:4200'],
+    origin: ['http://localhost:4200', 'http://falconz-bucket.s3-website.ap-south-1.amazonaws.com'],
     credentials: true // using cookies or Authorization header
 }));
 
