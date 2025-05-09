@@ -12,7 +12,7 @@ components:
 security:
   - BearerAuth: []  # Specifies that the BearerAuth is applied globally to all routes
 servers:
-  - url: 'http://localhost:3000'  # Update this to your base URL if different
+  - url: 'http://65.2.40.39:3000'  # Update this to your base URL if different
 
 paths:
   /api/health:
