@@ -1,4 +1,4 @@
-name: Deploy Angular to S3
+name: Build and Deploy Angular to S3
 
 on:
   workflow_run:
@@ -7,9 +7,10 @@ on:
       - completed
 
 jobs:
-  deploy:
+  build:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    name: Build Angular App
 
     steps:
       - name: Checkout code
@@ -28,6 +29,25 @@ jobs:
         run: npm run build:prod
         working-directory: ./frontend
 
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: angular-build
+          path: frontend/dist
+
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    name: Deploy Angular App
+    needs: build-angular
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: angular-build
+          path: dist/
+
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@master
         with:
@@ -37,4 +57,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          SOURCE_DIR: frontend/dist
+          SOURCE_DIR: dist/
