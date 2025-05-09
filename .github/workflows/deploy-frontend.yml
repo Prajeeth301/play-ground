@@ -45,7 +45,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     name: Deploy Angular App
-    needs: build-angular
+    needs: build
 
     steps:
       - name: Download build artifact
