@@ -61,6 +61,15 @@ jobs:
 
             rm dump_env.sh
 
+            # Clean previous backend folder if exists
+            rm -rf backend
+            unzip -o backend.zip
+
+            # Delete backend.zip if exists
+            rm -rf backend.zip
+
+            cd backend
+
             # Environment loader script
             curl -H "Authorization: token ${{ secrets.GH_PAT }}" -o load_env.sh https://raw.githubusercontent.com/${{ secrets.GH_USER }}/deployment-scripts/refs/heads/main/playground/load_env.sh
 
@@ -73,14 +82,6 @@ jobs:
             # Reload bash 
             source ~/.bashrc
 
-            # Clean previous backend folder if exists
-            rm -rf backend
-            unzip -o backend.zip
-
-            # Delete backend.zip if exists
-            rm -rf backend.zip
-
-            cd backend
             npm install
 
             # Install PM2 if not installed
